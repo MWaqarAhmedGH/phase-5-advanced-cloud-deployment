@@ -3,6 +3,10 @@
 # Production / Cloud Kubernetes Overrides
 # ==============================================
 
+# PostgreSQL - disabled for cloud (use Neon serverless)
+postgresql:
+  enabled: false
+
 # Frontend - use LoadBalancer for cloud
 frontend:
   replicaCount: 2

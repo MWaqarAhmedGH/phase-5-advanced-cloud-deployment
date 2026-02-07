@@ -93,6 +93,25 @@ backend:
       value: "statestore"
 
 # ---------------------------------------------
+# PostgreSQL Configuration (local only)
+# ---------------------------------------------
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  database: "todo_db"
+  username: "todo_user"
+  storage: "1Gi"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ---------------------------------------------
 # Kafka (Redpanda) Configuration
 # ---------------------------------------------
 kafka:
@@ -117,6 +136,7 @@ secrets:
   databaseUrl: ""
   openaiApiKey: ""
   betterAuthSecret: ""
+  postgresPassword: "todo_pass"
 
 # ---------------------------------------------
 # ConfigMap Configuration
