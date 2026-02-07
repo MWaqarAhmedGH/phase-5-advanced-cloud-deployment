@@ -1,0 +1,62 @@
+# ==============================================
+# Todo AI Chatbot - Cloud Values
+# Production / Cloud Kubernetes Overrides
+# ==============================================
+
+# Frontend - use LoadBalancer for cloud
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: ghcr.io/OWNER/REPO/todo-frontend
+    tag: latest
+    pullPolicy: Always
+
+  service:
+    type: LoadBalancer
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Backend - higher resources for cloud
+backend:
+  replicaCount: 2
+
+  image:
+    repository: ghcr.io/OWNER/REPO/todo-backend
+    tag: latest
+    pullPolicy: Always
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Kafka - use Strimzi for cloud deployments
+kafka:
+  enabled: false  # Use Strimzi operator instead of embedded Redpanda
+
+# Dapr
+dapr:
+  enabled: true
+  backend:
+    appId: "todo-backend"
+    appPort: "8000"
+    httpPort: "3500"
+    logLevel: "warn"
+
+# Cloud config overrides
+config:
+  frontendUrl: ""  # Set via CI/CD
+  backendUrl: "http://todo-chatbot-backend:8000"
+  apiUrl: "http://todo-chatbot-backend:8000"

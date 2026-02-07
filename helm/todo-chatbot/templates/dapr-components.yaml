@@ -1,0 +1,41 @@
+{{- if .Values.dapr.enabled }}
+# Kafka Pub/Sub Component
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    - name: brokers
+      value: "redpanda:29092"
+    - name: consumerGroup
+      value: "todo-backend"
+    - name: authType
+      value: "none"
+---
+# Dapr State Store Component (PostgreSQL)
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+    - name: connectionString
+      secretKeyRef:
+        name: {{ include "todo-chatbot.secrets.name" . }}
+        key: DATABASE_URL
+---
+# Kubernetes Secret Store Component
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kubernetes-secrets
+spec:
+  type: secretstores.kubernetes
+  version: v1
+  metadata: []
+{{- end }}
