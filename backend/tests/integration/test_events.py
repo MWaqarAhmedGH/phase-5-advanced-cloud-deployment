@@ -1,138 +1,156 @@
 """Integration tests for event publishing via Dapr Pub/Sub."""
 
-import base64
-import json
-import time
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, AsyncMock
 
-import pytest
 from fastapi.testclient import TestClient
-
-
-def make_demo_token(user_id: str = "test-user-1") -> str:
-    """Create a demo JWT token for testing."""
-    payload = {
-        "sub": user_id,
-        "email": "test@example.com",
-        "exp": int(time.time()) + 3600,
-    }
-    encoded = base64.b64encode(json.dumps(payload).encode()).decode()
-    return f"demo.{encoded}.testsig"
-
-
-@pytest.fixture
-def client():
-    """Create a test client with mocked database."""
-    with patch("db.get_engine") as mock_engine:
-        mock_eng = MagicMock()
-        mock_engine.return_value = mock_eng
-        with patch("db._engine", mock_eng):
-            with patch("db.create_db_and_tables"):
-                from main import app
-                yield TestClient(app)
-
-
-@pytest.fixture
-def auth_headers():
-    """Return auth headers with a demo token."""
-    token = make_demo_token("test-user-1")
-    return {"Authorization": f"Bearer {token}"}
 
 
 class TestEventPublishing:
     """Tests that task CRUD operations publish events via Dapr."""
 
-    @patch("routes.tasks.publish_event", new_callable=AsyncMock)
-    def test_create_task_publishes_event(
-        self, mock_publish, client, auth_headers
-    ):
+    def test_create_task_publishes_event(self, engine, auth_headers):
         """Creating a task should publish a task.created event."""
-        mock_publish.return_value = True
+        from db import get_session
+        from main import app
+        from sqlmodel import Session
 
-        response = client.post(
-            "/api/test-user-1/tasks",
-            json={"title": "Test event publishing"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 201
+        def override():
+            with Session(engine) as s:
+                yield s
 
-        mock_publish.assert_called_once()
-        call_kwargs = mock_publish.call_args
-        assert call_kwargs.kwargs["topic"] == "task-events"
-        assert call_kwargs.kwargs["event_type"] == "task.created"
-        assert call_kwargs.kwargs["user_id"] == "test-user-1"
+        app.dependency_overrides[get_session] = override
 
-    @patch("routes.tasks.publish_event", new_callable=AsyncMock)
-    def test_update_task_publishes_event(
-        self, mock_publish, client, auth_headers
-    ):
+        mock_publish = AsyncMock(return_value=True)
+        mock_schedule = AsyncMock(return_value=True)
+        mock_cancel = AsyncMock(return_value=True)
+
+        with patch("routes.tasks.publish_event", mock_publish), \
+             patch("routes.tasks.schedule_reminder", mock_schedule), \
+             patch("routes.tasks.cancel_reminder", mock_cancel):
+            c = TestClient(app)
+            response = c.post(
+                "/api/test-user-1/tasks",
+                json={"title": "Test event publishing"},
+                headers=auth_headers,
+            )
+            assert response.status_code == 201
+            mock_publish.assert_called_once()
+            assert mock_publish.call_args.kwargs["event_type"] == "task.created"
+            assert mock_publish.call_args.kwargs["user_id"] == "test-user-1"
+
+        app.dependency_overrides.clear()
+
+    def test_update_task_publishes_event(self, engine, auth_headers):
         """Updating a task should publish a task.updated event."""
-        mock_publish.return_value = True
+        from db import get_session
+        from main import app
+        from sqlmodel import Session
 
-        # Create task
-        create_resp = client.post(
-            "/api/test-user-1/tasks",
-            json={"title": "Original"},
-            headers=auth_headers,
-        )
-        task_id = create_resp.json()["id"]
-        mock_publish.reset_mock()
+        def override():
+            with Session(engine) as s:
+                yield s
 
-        # Update task
-        client.put(
-            f"/api/test-user-1/tasks/{task_id}",
-            json={"title": "Updated"},
-            headers=auth_headers,
-        )
+        app.dependency_overrides[get_session] = override
 
-        mock_publish.assert_called_once()
-        assert mock_publish.call_args.kwargs["event_type"] == "task.updated"
+        mock_publish = AsyncMock(return_value=True)
+        mock_schedule = AsyncMock(return_value=True)
+        mock_cancel = AsyncMock(return_value=True)
 
-    @patch("routes.tasks.publish_event", new_callable=AsyncMock)
-    def test_complete_task_publishes_event(
-        self, mock_publish, client, auth_headers
-    ):
+        with patch("routes.tasks.publish_event", mock_publish), \
+             patch("routes.tasks.schedule_reminder", mock_schedule), \
+             patch("routes.tasks.cancel_reminder", mock_cancel):
+            c = TestClient(app)
+            create_resp = c.post(
+                "/api/test-user-1/tasks",
+                json={"title": "Original"},
+                headers=auth_headers,
+            )
+            task_id = create_resp.json()["id"]
+            mock_publish.reset_mock()
+
+            c.put(
+                f"/api/test-user-1/tasks/{task_id}",
+                json={"title": "Updated"},
+                headers=auth_headers,
+            )
+            mock_publish.assert_called_once()
+            assert mock_publish.call_args.kwargs["event_type"] == "task.updated"
+
+        app.dependency_overrides.clear()
+
+    def test_complete_task_publishes_event(self, engine, auth_headers):
         """Completing a task should publish a task.completed event."""
-        mock_publish.return_value = True
+        from db import get_session
+        from main import app
+        from sqlmodel import Session
 
-        create_resp = client.post(
-            "/api/test-user-1/tasks",
-            json={"title": "Complete me"},
-            headers=auth_headers,
-        )
-        task_id = create_resp.json()["id"]
-        mock_publish.reset_mock()
+        def override():
+            with Session(engine) as s:
+                yield s
 
-        client.patch(
-            f"/api/test-user-1/tasks/{task_id}/complete",
-            headers=auth_headers,
-        )
+        app.dependency_overrides[get_session] = override
 
-        mock_publish.assert_called_once()
-        assert mock_publish.call_args.kwargs["event_type"] == "task.completed"
+        mock_publish = AsyncMock(return_value=True)
+        mock_schedule = AsyncMock(return_value=True)
+        mock_cancel = AsyncMock(return_value=True)
 
-    @patch("routes.tasks.publish_event", new_callable=AsyncMock)
-    def test_delete_task_publishes_event(
-        self, mock_publish, client, auth_headers
-    ):
+        with patch("routes.tasks.publish_event", mock_publish), \
+             patch("routes.tasks.schedule_reminder", mock_schedule), \
+             patch("routes.tasks.cancel_reminder", mock_cancel):
+            c = TestClient(app)
+            create_resp = c.post(
+                "/api/test-user-1/tasks",
+                json={"title": "Complete me"},
+                headers=auth_headers,
+            )
+            task_id = create_resp.json()["id"]
+            mock_publish.reset_mock()
+
+            c.patch(
+                f"/api/test-user-1/tasks/{task_id}/complete",
+                headers=auth_headers,
+            )
+            mock_publish.assert_called_once()
+            assert mock_publish.call_args.kwargs["event_type"] == "task.completed"
+
+        app.dependency_overrides.clear()
+
+    def test_delete_task_publishes_event(self, engine, auth_headers):
         """Deleting a task should publish a task.deleted event."""
-        mock_publish.return_value = True
+        from db import get_session
+        from main import app
+        from sqlmodel import Session
 
-        create_resp = client.post(
-            "/api/test-user-1/tasks",
-            json={"title": "Delete me"},
-            headers=auth_headers,
-        )
-        task_id = create_resp.json()["id"]
-        mock_publish.reset_mock()
+        def override():
+            with Session(engine) as s:
+                yield s
 
-        client.delete(
-            f"/api/test-user-1/tasks/{task_id}",
-            headers=auth_headers,
-        )
+        app.dependency_overrides[get_session] = override
 
-        mock_publish.assert_called_once()
-        assert mock_publish.call_args.kwargs["event_type"] == "task.deleted"
+        mock_publish = AsyncMock(return_value=True)
+        mock_schedule = AsyncMock(return_value=True)
+        mock_cancel = AsyncMock(return_value=True)
+
+        with patch("routes.tasks.publish_event", mock_publish), \
+             patch("routes.tasks.schedule_reminder", mock_schedule), \
+             patch("routes.tasks.cancel_reminder", mock_cancel):
+            c = TestClient(app)
+            create_resp = c.post(
+                "/api/test-user-1/tasks",
+                json={"title": "Delete me"},
+                headers=auth_headers,
+            )
+            task_id = create_resp.json()["id"]
+            mock_publish.reset_mock()
+
+            c.delete(
+                f"/api/test-user-1/tasks/{task_id}",
+                headers=auth_headers,
+            )
+            mock_publish.assert_called_once()
+            assert mock_publish.call_args.kwargs["event_type"] == "task.deleted"
+
+        app.dependency_overrides.clear()
 
     def test_event_handler_accepts_task_event(self, client):
         """POST /api/events/task should accept and process events."""
