@@ -2,6 +2,9 @@
 # Todo AI Chatbot - Cloud Values
 # Production / Cloud Kubernetes Overrides
 # ==============================================
+# Image repos are overridden by CI/CD pipeline
+# via --set backend.image.repository=... etc.
+# ==============================================
 
 # PostgreSQL - disabled for cloud (use Neon serverless)
 postgresql:
@@ -12,13 +15,13 @@ frontend:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/OWNER/REPO/todo-frontend
+    repository: ghcr.io/mwaqarahmedgh/phase-5-advanced-cloud-deployment/todo-frontend
     tag: latest
     pullPolicy: Always
 
   service:
     type: LoadBalancer
-    port: 3000
+    port: 80
     targetPort: 3000
 
   resources:
@@ -34,7 +37,7 @@ backend:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/OWNER/REPO/todo-backend
+    repository: ghcr.io/mwaqarahmedgh/phase-5-advanced-cloud-deployment/todo-backend
     tag: latest
     pullPolicy: Always
 
@@ -46,9 +49,20 @@ backend:
       cpu: 1000m
       memory: 1Gi
 
-# Kafka - use Strimzi for cloud deployments
+# Kafka - disabled in-cluster (use external Kafka/Redpanda Cloud)
 kafka:
-  enabled: false  # Use Strimzi operator instead of embedded Redpanda
+  enabled: false
+
+# Kafka Cloud Config (used by Dapr components)
+kafkaCloud:
+  enabled: true
+  # Set these via --set or secrets in CI/CD:
+  brokers: ""          # e.g. "seed-xyz.redpanda.com:9092"
+  authType: "password"
+  saslUsername: ""
+  saslPassword: ""
+  saslMechanism: "SCRAM-SHA-256"
+  tlsEnabled: "true"
 
 # Dapr
 dapr:
@@ -59,8 +73,18 @@ dapr:
     httpPort: "3500"
     logLevel: "warn"
 
+# Secrets - set via CI/CD pipeline
+secrets:
+  create: true
+  postgresPassword: ""
+
 # Cloud config overrides
 config:
-  frontendUrl: ""  # Set via CI/CD
+  create: true
+  frontendUrl: ""  # Set via CI/CD --set config.frontendUrl=...
   backendUrl: "http://todo-chatbot-backend:8000"
   apiUrl: "http://todo-chatbot-backend:8000"
+
+# Image pull secrets for ghcr.io
+imagePullSecrets:
+  - name: ghcr-pull-secret

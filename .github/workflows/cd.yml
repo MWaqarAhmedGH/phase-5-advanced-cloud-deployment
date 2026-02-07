@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["CI - Build and Test"]
     types: [completed]
-    branches: [main]
+    branches: [main, master]
 
 env:
   REGISTRY: ghcr.io
@@ -40,6 +40,23 @@ jobs:
       - name: Create namespace if not exists
         run: kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Install Dapr on cluster
+        run: |
+          # Install Dapr CLI
+          wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
+          # Initialize Dapr on cluster (skip if already installed)
+          dapr init -k --wait || echo "Dapr already installed on cluster"
+          dapr status -k
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy with Helm
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
@@ -48,22 +65,42 @@ jobs:
             --values ${{ env.HELM_CHART_PATH }}/values-cloud.yaml \
             --set backend.image.repository=${{ env.BACKEND_IMAGE }} \
             --set backend.image.tag=${{ github.event.workflow_run.head_sha }} \
+            --set backend.image.pullPolicy=Always \
             --set frontend.image.repository=${{ env.FRONTEND_IMAGE }} \
             --set frontend.image.tag=${{ github.event.workflow_run.head_sha }} \
+            --set frontend.image.pullPolicy=Always \
             --set secrets.databaseUrl="${{ secrets.DATABASE_URL }}" \
             --set secrets.openaiApiKey="${{ secrets.OPENAI_API_KEY }}" \
             --set secrets.betterAuthSecret="${{ secrets.BETTER_AUTH_SECRET }}" \
+            --set config.frontendUrl="${{ secrets.FRONTEND_URL }}" \
+            --set kafkaCloud.brokers="${{ secrets.KAFKA_BROKERS }}" \
+            --set kafkaCloud.saslUsername="${{ secrets.KAFKA_USERNAME }}" \
+            --set kafkaCloud.saslPassword="${{ secrets.KAFKA_PASSWORD }}" \
             --atomic \
-            --timeout 5m
+            --timeout 8m
 
       - name: Verify deployment
         run: |
-          kubectl rollout status deployment/${{ env.RELEASE_NAME }}-backend -n ${{ env.NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/${{ env.RELEASE_NAME }}-backend -n ${{ env.NAMESPACE }} --timeout=180s
           kubectl rollout status deployment/${{ env.RELEASE_NAME }}-frontend -n ${{ env.NAMESPACE }} --timeout=120s
 
       - name: Print deployment info
         if: success()
         run: |
-          echo "Deployment successful!"
+          echo "=== Deployment successful! ==="
+          echo "--- Pods ---"
           kubectl get pods -n ${{ env.NAMESPACE }}
+          echo "--- Services ---"
           kubectl get svc -n ${{ env.NAMESPACE }}
+          echo "--- Dapr Components ---"
+          kubectl get components.dapr.io -n ${{ env.NAMESPACE }}
+          echo "--- Dapr Status ---"
+          dapr status -k
+
+      - name: Print failure info
+        if: failure()
+        run: |
+          echo "=== Deployment failed! ==="
+          kubectl get pods -n ${{ env.NAMESPACE }}
+          kubectl describe pods -n ${{ env.NAMESPACE }} | tail -50
+          kubectl logs -l app=todo-backend -n ${{ env.NAMESPACE }} --tail=30 || true
