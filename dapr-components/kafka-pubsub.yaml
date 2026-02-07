@@ -8,7 +8,7 @@ spec:
   version: v1
   metadata:
     - name: brokers
-      value: "redpanda.redpanda.svc.cluster.local:9093"
+      value: "redpanda:29092"
     - name: consumerGroup
       value: "todo-service"
     - name: authType

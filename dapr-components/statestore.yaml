@@ -8,8 +8,4 @@ spec:
   version: v1
   metadata:
     - name: connectionString
-      secretKeyRef:
-        name: db-credentials
-        key: connection-string
-  auth:
-    secretStore: kubernetes-secrets
+      value: "host=postgres user=todo_user password=todo_pass port=5432 dbname=todo_db sslmode=disable"
