@@ -1,0 +1,69 @@
+name: CD - Deploy to Cloud Kubernetes
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Test"]
+    types: [completed]
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/todo-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/todo-frontend
+  HELM_CHART_PATH: ./helm/todo-chatbot
+  RELEASE_NAME: todo-chatbot
+  NAMESPACE: todo-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: "v3.13.0"
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create namespace if not exists
+        run: kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+            --namespace ${{ env.NAMESPACE }} \
+            --values ${{ env.HELM_CHART_PATH }}/values.yaml \
+            --values ${{ env.HELM_CHART_PATH }}/values-cloud.yaml \
+            --set backend.image.repository=${{ env.BACKEND_IMAGE }} \
+            --set backend.image.tag=${{ github.event.workflow_run.head_sha }} \
+            --set frontend.image.repository=${{ env.FRONTEND_IMAGE }} \
+            --set frontend.image.tag=${{ github.event.workflow_run.head_sha }} \
+            --set secrets.databaseUrl="${{ secrets.DATABASE_URL }}" \
+            --set secrets.openaiApiKey="${{ secrets.OPENAI_API_KEY }}" \
+            --set secrets.betterAuthSecret="${{ secrets.BETTER_AUTH_SECRET }}" \
+            --atomic \
+            --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ env.RELEASE_NAME }}-backend -n ${{ env.NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/${{ env.RELEASE_NAME }}-frontend -n ${{ env.NAMESPACE }} --timeout=120s
+
+      - name: Print deployment info
+        if: success()
+        run: |
+          echo "Deployment successful!"
+          kubectl get pods -n ${{ env.NAMESPACE }}
+          kubectl get svc -n ${{ env.NAMESPACE }}
