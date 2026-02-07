@@ -91,6 +91,8 @@ backend:
       value: "kafka-pubsub"
     - name: STATE_STORE_NAME
       value: "statestore"
+    - name: LOG_LEVEL
+      value: "INFO"
 
 # ---------------------------------------------
 # PostgreSQL Configuration (local only)

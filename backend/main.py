@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import create_db_and_tables
+from middleware.logging_middleware import RequestLoggingMiddleware
 from routes.tasks import router as tasks_router
 from routes.chat import router as chat_router
 from routes.health import router as health_router
@@ -20,10 +21,12 @@ from routes.notifications import router as notifications_router
 load_dotenv()
 
 # Configure structured logging
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s [%(funcName)s] %(message)s",
 )
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -66,6 +69,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request logging and metrics middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # Include routers
 app.include_router(health_router)

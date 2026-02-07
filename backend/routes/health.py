@@ -1,4 +1,4 @@
-"""Health and readiness check endpoints."""
+"""Health, readiness, and metrics endpoints."""
 
 import os
 import logging
@@ -7,6 +7,7 @@ import httpx
 from fastapi import APIRouter
 
 from db import get_engine
+from middleware.logging_middleware import get_metrics
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["health"])
@@ -55,3 +56,9 @@ async def readiness_check():
         status_code=status_code,
         content={"status": "ready" if all_ready else "not_ready", "checks": checks},
     )
+
+
+@router.get("/metrics")
+def metrics():
+    """Application metrics endpoint for monitoring."""
+    return get_metrics()
