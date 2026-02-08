@@ -8,8 +8,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/todo-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/todo-frontend
   HELM_CHART_PATH: ./helm/todo-chatbot
   RELEASE_NAME: todo-chatbot
   NAMESPACE: todo-app
@@ -23,6 +21,12 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set lowercase image names
+        run: |
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "BACKEND_IMAGE=ghcr.io/${REPO_LC}/todo-backend" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=ghcr.io/${REPO_LC}/todo-frontend" >> $GITHUB_ENV
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
