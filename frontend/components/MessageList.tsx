@@ -17,16 +17,12 @@ interface MessageListProps {
   isLoading?: boolean;
 }
 
-/**
- * MessageList component for displaying chat messages with gradient styling.
- */
 export default function MessageList({
   messages,
   isLoading = false,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -36,9 +32,9 @@ export default function MessageList({
       <div className="h-full flex items-center justify-center p-6">
         <div className="text-center max-w-md animate-fade-in">
           {/* Icon */}
-          <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mb-6">
+          <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 border border-emerald-500/25 flex items-center justify-center mb-6">
             <svg
-              className="w-10 h-10 text-purple-400"
+              className="w-10 h-10 text-emerald-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -53,34 +49,34 @@ export default function MessageList({
           </div>
 
           <h3 className="text-xl font-semibold text-white mb-2">
-            No messages yet
+            Start a conversation
           </h3>
           <p className="text-slate-400 mb-8">
-            Start a conversation by typing a message below.
+            Manage your tasks with natural language commands.
           </p>
 
           {/* Example commands */}
           <div className="glass-card rounded-xl p-5 text-left">
-            <p className="text-sm font-medium text-purple-400 mb-3">Try saying:</p>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full"></span>
+            <p className="text-sm font-medium text-emerald-400 mb-3">Try saying:</p>
+            <ul className="space-y-2.5">
+              <li className="flex items-center gap-2.5 text-sm text-slate-300">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></span>
                 &quot;Add a high priority task to finish report tagged work&quot;
               </li>
-              <li className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="w-1.5 h-1.5 bg-pink-400 rounded-full"></span>
+              <li className="flex items-center gap-2.5 text-sm text-slate-300">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full flex-shrink-0"></span>
                 &quot;Show my high priority tasks&quot;
               </li>
-              <li className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
+              <li className="flex items-center gap-2.5 text-sm text-slate-300">
+                <span className="w-1.5 h-1.5 bg-teal-400 rounded-full flex-shrink-0"></span>
                 &quot;Search for tasks about groceries&quot;
               </li>
-              <li className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+              <li className="flex items-center gap-2.5 text-sm text-slate-300">
+                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full flex-shrink-0"></span>
                 &quot;Add task to submit assignment due tomorrow at 5pm&quot;
               </li>
-              <li className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+              <li className="flex items-center gap-2.5 text-sm text-slate-300">
+                <span className="w-1.5 h-1.5 bg-violet-400 rounded-full flex-shrink-0"></span>
                 &quot;Show tasks sorted by priority&quot;
               </li>
             </ul>
@@ -115,7 +111,7 @@ export default function MessageList({
 
           {/* Message bubble */}
           <div
-            className={`max-w-[75%] px-4 py-3 transition-transform duration-200 hover:scale-[1.02] ${
+            className={`max-w-[75%] px-4 py-3 transition-transform duration-200 hover:scale-[1.01] ${
               message.role === "user"
                 ? "bubble-user"
                 : "bubble-assistant"
@@ -126,7 +122,7 @@ export default function MessageList({
             {/* Tool calls indicator */}
             {message.tool_calls && message.tool_calls.length > 0 && (
               <div className="mt-3 pt-3 border-t border-white/10">
-                <div className="flex items-center gap-2 text-xs text-cyan-400">
+                <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>

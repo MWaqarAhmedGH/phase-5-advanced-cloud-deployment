@@ -24,9 +24,6 @@ interface Message {
   }> | null;
 }
 
-/**
- * ChatInterface component - main chat UI with conversation management.
- */
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -40,7 +37,6 @@ export default function ChatInterface() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputHandle>(null);
 
-  // Close user menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -51,10 +47,8 @@ export default function ChatInterface() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Load conversations on mount and focus input
   useEffect(() => {
     loadConversations();
-    // Auto-focus input on initial load (after login)
     setTimeout(() => messageInputRef.current?.focus(), 200);
   }, []);
 
@@ -84,7 +78,6 @@ export default function ChatInterface() {
     }
   }, []);
 
-  // Load messages when conversation changes
   useEffect(() => {
     if (currentConversationId) {
       loadConversationMessages(currentConversationId);
@@ -94,7 +87,6 @@ export default function ChatInterface() {
   }, [currentConversationId, loadConversationMessages]);
 
   const handleSendMessage = async (content: string) => {
-    // Add optimistic user message
     const tempId = `temp-${Date.now()}`;
     const userMessage: Message = {
       id: tempId,
@@ -108,14 +100,11 @@ export default function ChatInterface() {
     try {
       const response = await sendChatMessage(content, currentConversationId || undefined);
 
-      // Update conversation ID if this was a new conversation
       if (!currentConversationId) {
         setCurrentConversationId(response.conversation_id);
-        // Reload conversations to show the new one
         await loadConversations();
       }
 
-      // Add assistant message
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
@@ -123,12 +112,10 @@ export default function ChatInterface() {
         tool_calls: response.tool_calls,
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      // Focus on input after response
       setTimeout(() => messageInputRef.current?.focus(), 100);
     } catch (err) {
       console.error("Failed to send message:", err);
       setError(err instanceof Error ? err.message : "Failed to send message");
-      // Remove optimistic message on error
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
       setIsLoading(false);
@@ -144,16 +131,13 @@ export default function ChatInterface() {
     setCurrentConversationId(null);
     setMessages([]);
     setError(null);
-    // Focus on input after new chat
     setTimeout(() => messageInputRef.current?.focus(), 100);
   };
 
   const handleDeleteConversation = async (id: string) => {
     try {
       await deleteConversation(id);
-      // Remove from local state
       setConversations((prev) => prev.filter((c) => c.id !== id));
-      // Clear current conversation if it was deleted
       if (currentConversationId === id) {
         handleNewConversation();
       }
@@ -176,7 +160,7 @@ export default function ChatInterface() {
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 glass-button rounded-xl shadow-lg transition-all duration-300 hover:shadow-neon-purple"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 glass-button rounded-xl shadow-lg transition-all duration-300"
       >
         <svg
           className="w-6 h-6 text-slate-300"
@@ -219,9 +203,9 @@ export default function ChatInterface() {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-dark-900 via-dark-800 to-dark-700">
         {/* Header */}
-        <div className="glass border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <div className="glass border-b border-white/8 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 pl-12 lg:pl-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-neon-purple">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-glow-emerald">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -241,7 +225,7 @@ export default function ChatInterface() {
                 AI Todo Assistant
               </h1>
               <p className="text-xs text-slate-400">
-                Manage your tasks with natural language
+                Manage tasks with natural language
               </p>
             </div>
           </div>
@@ -266,10 +250,9 @@ export default function ChatInterface() {
               </svg>
             </button>
 
-            {/* Dropdown menu */}
             {userMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 dropdown-glass animate-fade-in">
-                <div className="p-4 border-b border-white/10">
+                <div className="p-4 border-b border-white/8">
                   <p className="text-sm font-medium text-white">{displayName}</p>
                   <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                 </div>
@@ -291,7 +274,6 @@ export default function ChatInterface() {
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-auto">
-          {/* Error banner */}
           {error && (
             <div className="mx-4 mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 animate-slide-up">
               <div className="flex items-center gap-3">
@@ -313,11 +295,9 @@ export default function ChatInterface() {
             </div>
           )}
 
-          {/* Messages */}
           <MessageList messages={messages} isLoading={isLoading} />
         </div>
 
-        {/* Input - outside scroll container */}
         <MessageInput ref={messageInputRef} onSendMessage={handleSendMessage} disabled={isLoading} />
       </div>
     </div>

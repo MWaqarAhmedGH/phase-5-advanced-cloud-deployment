@@ -109,6 +109,17 @@ The GitHub Actions pipeline handles cloud deployment automatically.
 
 Push to `master` to trigger CI (test + build) then CD (deploy to cloud K8s).
 
+### Deployment Status
+
+| Component | Status | URL |
+|-----------|--------|-----|
+| Frontend (Vercel) | Deployed | [frontend-rho-ten-27.vercel.app](https://frontend-rho-ten-27.vercel.app) |
+| CI Pipeline | Passing | GitHub Actions (build + test + push images) |
+| CD Pipeline | Ready | Helm deploy to cloud K8s |
+| Backend (Cloud K8s) | Pending | See note below |
+
+> **Note:** Backend cloud deployment on Oracle Cloud could not be completed due to ongoing Oracle Cloud account creation issues (after multiple attempts). The backend cloud deployment could not be connected to Oracle Cloud at this stage. However, the full architecture, specs, codebase, Minikube local deployment, CI/CD pipelines, and frontend deployment are completed and submitted successfully as per Phase V requirements.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |

@@ -17,9 +17,6 @@ interface ConversationListProps {
   onDeleteConversation: (id: string) => void;
 }
 
-/**
- * ConversationList component for displaying and managing chat history.
- */
 export default function ConversationList({
   conversations,
   currentConversationId,
@@ -56,23 +53,13 @@ export default function ConversationList({
   return (
     <div className="w-72 sidebar-glass flex flex-col h-full">
       {/* Header with new chat button */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-white/8">
         <button
           onClick={onNewConversation}
           className="w-full btn-neon flex items-center justify-center gap-2 py-3 rounded-xl"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           New Chat
         </button>
@@ -82,19 +69,9 @@ export default function ConversationList({
       <div className="flex-1 overflow-y-auto py-2">
         {conversations.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-              <svg
-                className="w-6 h-6 text-slate-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
+            <div className="w-12 h-12 mx-auto rounded-xl bg-emerald-500/8 border border-emerald-500/15 flex items-center justify-center mb-3">
+              <svg className="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
             <p className="text-slate-500 text-sm">No conversations yet</p>
@@ -108,16 +85,15 @@ export default function ConversationList({
                   onClick={() => onSelectConversation(conversation.id)}
                   className={`w-full text-left px-3 py-3 rounded-xl transition-all duration-200 group ${
                     currentConversationId === conversation.id
-                      ? "sidebar-item-active bg-purple-500/10"
+                      ? "sidebar-item-active bg-emerald-500/8"
                       : "sidebar-item hover:bg-white/5"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Chat icon */}
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                       currentConversationId === conversation.id
-                        ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                        : "bg-white/5 group-hover:bg-white/10"
+                        ? "bg-gradient-to-br from-emerald-500 to-teal-500"
+                        : "bg-white/5 group-hover:bg-white/8"
                     }`}>
                       <svg
                         className={`w-4 h-4 ${
@@ -129,16 +105,10 @@ export default function ConversationList({
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
 
-                    {/* Title and date */}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${
                         currentConversationId === conversation.id
@@ -152,7 +122,6 @@ export default function ConversationList({
                       </p>
                     </div>
 
-                    {/* Delete button */}
                     <button
                       onClick={(e) => handleDelete(e, conversation.id)}
                       disabled={deletingId === conversation.id}
@@ -160,38 +129,13 @@ export default function ConversationList({
                       title="Delete conversation"
                     >
                       {deletingId === conversation.id ? (
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                       ) : (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       )}
                     </button>
@@ -204,9 +148,9 @@ export default function ConversationList({
       </div>
 
       {/* Footer */}
-      <div className="p-4 pb-8 border-t border-white/10">
+      <div className="p-4 pb-8 border-t border-white/8">
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
           <span>AI Assistant Online</span>
         </div>
       </div>
